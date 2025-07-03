@@ -6,7 +6,7 @@
     </x-slot>
 
     <x-card>
-        <x-form :action="route('email-list.store')" post>
+        <x-form :action="route('email-list.store')" post enctype="multipart/form-data">
             <div>
                 <x-input-label for="title" :value="__('Title')"/>
                 <x-text-input
@@ -25,6 +25,7 @@
                     class="block mt-1 w-full"
                     name="file"
                     type="file"
+                    accept=".csv"
                     autofocus
                 />
                 <x-input-error :messages="$errors->get('file')" class="mt-2"/>
