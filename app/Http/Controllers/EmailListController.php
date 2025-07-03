@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Models\EmailList;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Http\UploadedFile;
 
 class EmailListController extends Controller
 {
@@ -30,12 +32,26 @@ class EmailListController extends Controller
      */
     public function store(Request $request)
     {
-        $data = $request->validate([
+        $request->validate([
             'title' => ['required', 'max:255'],
             'file' => ['required', 'file', 'mimes:csv'],
         ]);
 
-        $file = $request->file('file');
+        $emails = $this->getEmailsFromCsvFile($request->file('file'));
+
+        DB::transaction(function () use ($request, $emails) {
+            $emailList = EmailList::query()->create([
+                'title' => $request->title,
+            ]);
+
+            $emailList->subscribers()->createMany($emails);
+        });
+
+        return to_route('email-list.index');
+    }
+
+    private function getEmailsFromCsvFile(UploadedFile $file): array
+    {
         $fileHandle = fopen($file->getRealPath(), 'r');
         $items = [];
 
@@ -51,19 +67,14 @@ class EmailListController extends Controller
 
         fclose($fileHandle);
 
-        $emailList = EmailList::query()->create([
-            'title' => $data['title'],
-        ]);
-
-        $emailList->subscribers()->createMany($items);
-
-        return to_route('email-list.index');
+        return $items;
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(EmailList $emailList)
+    public
+    function show(EmailList $emailList)
     {
         //
     }
@@ -71,7 +82,8 @@ class EmailListController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(EmailList $emailList)
+    public
+    function edit(EmailList $emailList)
     {
         //
     }
@@ -79,7 +91,8 @@ class EmailListController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, EmailList $emailList)
+    public
+    function update(Request $request, EmailList $emailList)
     {
         //
     }
@@ -87,7 +100,8 @@ class EmailListController extends Controller
     /**
      * Remove the specified resource from storage.
      */
-    public function destroy(EmailList $emailList)
+    public
+    function destroy(EmailList $emailList)
     {
         //
     }
